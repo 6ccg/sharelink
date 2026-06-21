@@ -23,7 +23,9 @@ export interface TrendItem {
 export interface GeoItem {
   country: string;
   region: string;
-  pv: number;
+  requests: number;
+  uv: number;
+  ip_count: number;
 }
 
 export interface UAItem {

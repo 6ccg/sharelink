@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
-import type { WheelEvent } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { geoMercator, geoPath } from 'd3-geo';
+import { useTranslation } from '../api/i18n';
 import { useTheme } from '../api/theme';
 import { buildMapFeatures } from './dashboard/geoMapData';
 import type { GeoItem } from './dashboard/types';
@@ -19,6 +19,8 @@ interface HoveredFeature {
   name: string;
   type: 'country' | 'province';
   value: number;
+  uv: number;
+  ipCount: number;
   x: number;
   y: number;
 }
@@ -29,14 +31,25 @@ const projection = geoMercator()
 const path = geoPath(projection);
 
 export default function GeoDistributionMap({ geo }: { geo: GeoItem[] }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
+  const svgRef = useRef<SVGSVGElement | null>(null);
   const [hovered, setHovered] = useState<HoveredFeature | null>(null);
   const [view, setView] = useState<MapView>(DEFAULT_VIEW);
   const [drag, setDrag] = useState<DragState | null>(null);
 
-  const { features, maxPV } = useMemo(() => buildMapFeatures(geo), [geo]);
+  const { features, maxRequests } = useMemo(() => buildMapFeatures(geo), [geo]);
   const emptyFill = theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.05)';
   const emptyStroke = theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.1)';
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const onWheel = (event: globalThis.WheelEvent) => handleWheel(event, svg, view, setView);
+    svg.addEventListener('wheel', onWheel, { passive: false });
+    return () => svg.removeEventListener('wheel', onWheel);
+  }, [view]);
 
   return (
     <div style={{ position: 'relative', width: '100%', userSelect: 'none' }}>
@@ -56,6 +69,7 @@ export default function GeoDistributionMap({ geo }: { geo: GeoItem[] }) {
         <MapControlButton label="全球" title="回到全球视角" onClick={() => setView(WORLD_VIEW)} />
       </div>
       <svg
+        ref={svgRef}
         viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
         role="img"
         aria-label="Geo distribution map"
@@ -66,7 +80,6 @@ export default function GeoDistributionMap({ geo }: { geo: GeoItem[] }) {
           cursor: drag ? 'grabbing' : 'grab',
           touchAction: 'none',
         }}
-        onWheel={(event) => handleWheel(event, view, setView)}
         onPointerDown={(event) => {
           event.currentTarget.setPointerCapture(event.pointerId);
           setHovered(null);
@@ -97,7 +110,7 @@ export default function GeoDistributionMap({ geo }: { geo: GeoItem[] }) {
           const props = item.properties;
           const hasValue = props.value > 0;
           const fill = hasValue
-            ? getFillColor(props.value, maxPV, props.type, theme)
+            ? getFillColor(props.value, maxRequests, props.type, theme)
             : emptyFill;
           return (
             <path
@@ -117,6 +130,8 @@ export default function GeoDistributionMap({ geo }: { geo: GeoItem[] }) {
                   name: props.name,
                   type: props.type,
                   value: props.value,
+                  uv: props.uv,
+                  ipCount: props.ipCount,
                   x: event.clientX - rect.left,
                   y: event.clientY - rect.top,
                 });
@@ -146,7 +161,7 @@ export default function GeoDistributionMap({ geo }: { geo: GeoItem[] }) {
         >
           <div>{hovered.name}</div>
           <div style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>
-            {hovered.value} PV
+            {t('dash.ip_count')} {hovered.ipCount} · UV {hovered.uv} · {t('dash.requests')} {hovered.value}
           </div>
         </div>
       )}
@@ -187,12 +202,13 @@ function MapControlButton({
 }
 
 function handleWheel(
-  event: WheelEvent<SVGSVGElement>,
+  event: globalThis.WheelEvent,
+  svg: SVGSVGElement,
   view: MapView,
   setView: (updater: (current: MapView) => MapView) => void
 ) {
   event.preventDefault();
-  const rect = event.currentTarget.getBoundingClientRect();
+  const rect = svg.getBoundingClientRect();
   const pointerX = view.x + (event.clientX - rect.left) / rect.width * view.width;
   const pointerY = view.y + (event.clientY - rect.top) / rect.height * view.height;
   const factor = event.deltaY < 0 ? 0.86 : 1.16;

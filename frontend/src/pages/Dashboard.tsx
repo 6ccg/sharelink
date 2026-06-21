@@ -216,7 +216,9 @@ export default function Dashboard() {
                 <tr>
                   <th>{t('dash.country')}</th>
                   <th>{t('dash.region_city')}</th>
-                  <th style={{ textAlign: 'right' }}>PV</th>
+                  <th style={{ textAlign: 'right' }}>{t('dash.ip_count')}</th>
+                  <th style={{ textAlign: 'right' }}>{t('dash.uv_count')}</th>
+                  <th style={{ textAlign: 'right' }}>{t('dash.requests')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -225,12 +227,14 @@ export default function Dashboard() {
                     <tr key={idx}>
                       <td>{item.country || t('dash.unknown')}</td>
                       <td>{item.region || '-'}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 600 }}>{item.pv}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 600 }}>{item.ip_count}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 600 }}>{item.uv}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 600 }}>{item.requests}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '24px 0' }}>
+                    <td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '24px 0' }}>
                       {t('dash.no_geo')}
                     </td>
                   </tr>
@@ -276,7 +280,7 @@ export default function Dashboard() {
                 <thead>
                   <tr>
                     <th>{t('dash.ua')}</th>
-                    <th style={{ textAlign: 'right' }}>PV</th>
+                    <th style={{ textAlign: 'right' }}>{t('dash.requests')}</th>
                   </tr>
                 </thead>
                 <tbody>

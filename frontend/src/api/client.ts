@@ -45,11 +45,12 @@ export function isNetworkError(err: unknown): boolean {
  * Returns a user-friendly error message based on the error type.
  */
 export function classifyError(err: unknown, t: (key: string) => string): string {
-  if (isNetworkError(err)) return t('common.error.network');
   if (err instanceof ApiError) {
+    if (err.status === 401) return t('common.auth.expired');
     if (err.status >= 500) return t('common.error.server');
     return err.message;
   }
+  if (isNetworkError(err)) return t('common.error.network');
   return err instanceof Error ? err.message : t('common.error.unknown');
 }
 
@@ -87,7 +88,7 @@ export async function request(path: string, options: RequestOptions = { method: 
         window.history.pushState({}, '', '/login');
         window.dispatchEvent(new Event('sharelink_pushstate'));
       }
-      throw new ApiError('Unauthorized', 401);
+      throw new ApiError('Session expired', 401);
     }
 
     // Safely parse JSON only when content-type is JSON-like

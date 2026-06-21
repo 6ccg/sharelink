@@ -9,25 +9,27 @@ export interface MapFeatureProps {
   name: string;
   type: 'country' | 'province';
   value: number;
+  uv: number;
+  ipCount: number;
 }
 
 export function buildMapFeatures(geo: GeoItem[]) {
-  const countryPV = new Map<string, number>();
-  const provincePV = new Map<string, number>();
+  const countryStats = new Map<string, GeoStats>();
+  const provinceStats = new Map<string, GeoStats>();
 
   for (const item of geo) {
-    const country = item.country || '';
-    if (!country || country === '内网/本地' || country === '未知') continue;
+    const country = normalizeGeoLabel(item.country);
+    if (!country || country === '内网/本地' || country === '未知' || country === 'unknown') continue;
 
-    if (country === '中国') {
+    if (isChinaCountry(country)) {
       const province = normalizeChinaProvince(item.region);
-      if (province) provincePV.set(province, (provincePV.get(province) || 0) + item.pv);
+      if (province) addGeoStats(provinceStats, province, item);
       continue;
     }
 
-    const iso = COUNTRY_NAME_TO_ISO[country];
+    const iso = resolveCountryAlpha2(country);
     const numeric = iso ? countries.alpha2ToNumeric(iso) : undefined;
-    if (numeric) countryPV.set(numeric, (countryPV.get(numeric) || 0) + item.pv);
+    if (numeric) addGeoStats(countryStats, numeric, item);
   }
 
   const world = feature(
@@ -40,20 +42,20 @@ export function buildMapFeatures(geo: GeoItem[]) {
     .map((item) => withMapProps(item, {
       name: item.properties?.name || String(item.id || ''),
       type: 'country',
-      value: countryPV.get(String(item.id).padStart(3, '0')) || 0,
+      ...toMapStats(countryStats.get(String(item.id).padStart(3, '0'))),
     }));
 
   const provinceFeatures = (ChinaData as FeatureCollection<Geometry, { name: string }>).features.map((item) =>
     withMapProps(item, {
       name: item.properties?.name || '',
       type: 'province',
-      value: provincePV.get(normalizeChinaProvince(item.properties?.name || '')) || 0,
+      ...toMapStats(provinceStats.get(normalizeChinaProvince(item.properties?.name || ''))),
     })
   );
 
   const features = [...countryFeatures, ...provinceFeatures];
-  const maxPV = features.reduce((max, item) => Math.max(max, item.properties.value), 0);
-  return { features, maxPV };
+  const maxRequests = features.reduce((max, item) => Math.max(max, item.properties.value), 0);
+  return { features, maxRequests };
 }
 
 function withMapProps(
@@ -66,10 +68,59 @@ function withMapProps(
   };
 }
 
+interface GeoStats {
+  value: number;
+  uv: number;
+  ipCount: number;
+}
+
+function addGeoStats(stats: Map<string, GeoStats>, key: string, item: GeoItem) {
+  const current = stats.get(key) || { value: 0, uv: 0, ipCount: 0 };
+  current.value += item.requests;
+  current.uv += item.uv;
+  current.ipCount += item.ip_count;
+  stats.set(key, current);
+}
+
+function toMapStats(stats?: GeoStats) {
+  if (!stats) return { value: 0, uv: 0, ipCount: 0 };
+  return {
+    value: stats.value,
+    uv: stats.uv,
+    ipCount: stats.ipCount,
+  };
+}
+
 function normalizeChinaProvince(region: string) {
-  return region
-    .replace(/省|市|壮族自治区|回族自治区|维吾尔自治区|自治区|特别行政区/g, '')
+  const normalized = normalizeGeoLabel(region)
+    .replace(/^中国/, '')
+    .replace(/省|市|壮族自治区|回族自治区|维吾尔自治区|自治区|特别行政区|地区|盟/g, '')
     .trim();
+  if (!normalized || normalized === '0' || normalized === '未知' || normalized.toLowerCase() === 'unknown') return '';
+  return CHINA_PROVINCE_ALIASES[normalized] || normalized;
+}
+
+function normalizeGeoLabel(value: string) {
+  return (value || '').trim();
+}
+
+function isChinaCountry(country: string) {
+  const normalized = country.toLowerCase();
+  return country === '中国' || country === '中华人民共和国' || normalized === 'china' || normalized === 'cn' || normalized === 'chn';
+}
+
+function resolveCountryAlpha2(country: string) {
+  const upper = country.toUpperCase();
+  if (/^[A-Z]{2}$/.test(upper) && countries.isValid(upper)) return upper;
+  if (/^[A-Z]{3}$/.test(upper)) {
+    const alpha2 = countries.alpha3ToAlpha2(upper);
+    if (alpha2) return alpha2;
+  }
+
+  const mapped = COUNTRY_NAME_TO_ISO[country] || COUNTRY_NAME_TO_ISO[country.toLowerCase()];
+  if (mapped) return mapped;
+
+  return countries.getAlpha2Code(country, 'zh') || countries.getAlpha2Code(country, 'en');
 }
 
 const COUNTRY_NAME_TO_ISO: Record<string, string> = {
@@ -103,4 +154,25 @@ const COUNTRY_NAME_TO_ISO: Record<string, string> = {
   '古巴': 'CU', '海地': 'HT', '多米尼加': 'DO', '巴拿马': 'PA', '哥斯达黎加': 'CR',
   '危地马拉': 'GT', '洪都拉斯': 'HN', '萨尔瓦多': 'SV', '尼加拉瓜': 'NI',
   '中国台湾': 'TW', '中国香港': 'HK', '中国澳门': 'MO',
+  '台湾': 'TW', '香港': 'HK', '澳门': 'MO',
+  'united states': 'US', 'usa': 'US', 'us': 'US',
+  'united kingdom': 'GB', 'uk': 'GB',
+  'south korea': 'KR', 'korea': 'KR',
+  'russia': 'RU', 'vietnam': 'VN',
+  'singapore': 'SG', 'japan': 'JP', 'germany': 'DE', 'france': 'FR',
+};
+
+const CHINA_PROVINCE_ALIASES: Record<string, string> = {
+  内蒙古: '内蒙古',
+  广西: '广西',
+  西藏: '西藏',
+  宁夏: '宁夏',
+  新疆: '新疆',
+  香港: '香港',
+  澳门: '澳门',
+  台湾: '台湾',
+  北京: '北京',
+  天津: '天津',
+  上海: '上海',
+  重庆: '重庆',
 };
