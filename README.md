@@ -1,5 +1,7 @@
 # ShareLink
 
+![ShareLink dashboard](docs/assets/sharelink-dashboard.png)
+
 ShareLink 是一个自用短链管理和反向代理网关。它可以把公开的两段式路径，例如 `/export/backups`，映射到真实目标地址；管理员可以选择反向代理或 302 跳转模式，并为链接配置有效期、访问日志、User-Agent 策略、下载文件名和内存缓存。
 
 适合用来发布临时文件、隐藏上游域名、统一管理外链入口，或为内部资源提供带统计和访问控制的公开访问地址。
