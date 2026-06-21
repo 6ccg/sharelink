@@ -1,0 +1,5 @@
+services:
+  sharelink:
+    build:
+      context: .
+      dockerfile: Dockerfile
