@@ -1,0 +1,22 @@
+services:
+  sharelink:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sharelink
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      DB_TYPE: "sqlite"
+      DB_DSN: "/data/sharelink.db"
+      INITIAL_ADMIN_PASSWORD: "${INITIAL_ADMIN_PASSWORD:?set INITIAL_ADMIN_PASSWORD}"
+      DATA_DIR: "/data"
+      IP_DB_PATH: "${IP_DB_PATH:-/app/data/ip2region.xdb}"
+      LOG_LEVEL: "info"
+      CORS_ALLOWED_ORIGINS: "${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}"
+      APP_TIMEZONE: "${APP_TIMEZONE:-Asia/Shanghai}"
+      JWT_SECRET: "${JWT_SECRET:?set JWT_SECRET}"
+    volumes:
+      - ./data:/data

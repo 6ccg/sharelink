@@ -1,0 +1,11 @@
+*.log
+*.pid
+
+.playwright-mcp/
+
+backend/sharelink.db
+backend/sharelink.db.bak-*
+/data/
+
+frontend/node_modules/
+frontend/dist/

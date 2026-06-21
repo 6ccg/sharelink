@@ -1,0 +1,11 @@
+.git
+.playwright-mcp
+data
+
+*.log
+*.pid
+
+frontend/node_modules
+frontend/dist
+
+backend/sharelink.db
