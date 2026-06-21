@@ -116,7 +116,7 @@ POST /api/auth/logout
 GET  /api/admin/*
 ```
 
-公开短链不走 `/api`，而是两段式路径，例如：
+公开访问地址就是你创建的短链路径，例如：
 
 ```text
 /export/backups
