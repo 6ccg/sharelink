@@ -816,6 +816,7 @@ func GetAnalyticsGeo(c *gin.Context) {
 	type GeoItem struct {
 		Country  string `json:"country"`
 		Region   string `json:"region"`
+		City     string `json:"city"`
 		Requests int64  `json:"requests"`
 		UV       int64  `json:"uv"`
 		IPCount  int64  `json:"ip_count"`
@@ -823,9 +824,9 @@ func GetAnalyticsGeo(c *gin.Context) {
 
 	var results []GeoItem
 	err := db.DB.Model(&db.VisitLog{}).
-		Select("country, region, COUNT(*) as requests, COUNT(DISTINCT visitor_hash) as uv, COUNT(DISTINCT ip) as ip_count").
+		Select("country, region, city, COUNT(*) as requests, COUNT(DISTINCT visitor_hash) as uv, COUNT(DISTINCT ip) as ip_count").
 		Where("status = ?", "success").
-		Group("country, region").
+		Group("country, region, city").
 		Order("requests DESC").
 		Limit(20).
 		Scan(&results).Error

@@ -226,7 +226,7 @@ export default function Dashboard() {
                   geo.map((item, idx) => (
                     <tr key={idx}>
                       <td>{item.country || t('dash.unknown')}</td>
-                      <td>{item.region || '-'}</td>
+                      <td>{formatRegionCity(item)}</td>
                       <td style={{ textAlign: 'right', fontWeight: 600 }}>{item.ip_count}</td>
                       <td style={{ textAlign: 'right', fontWeight: 600 }}>{item.uv}</td>
                       <td style={{ textAlign: 'right', fontWeight: 600 }}>{item.requests}</td>
@@ -308,4 +308,11 @@ export default function Dashboard() {
       </div>
     </div>
   );
+}
+
+function formatRegionCity(item: GeoItem) {
+  const region = item.region || '';
+  const city = item.city || '';
+  if (region && city && region !== city) return `${region} / ${city}`;
+  return region || city || '-';
 }

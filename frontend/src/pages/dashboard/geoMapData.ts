@@ -96,13 +96,13 @@ function toMapStats(stats?: GeoStats) {
   };
 }
 
-function normalizeChinaProvince(region: string) {
-  const normalized = normalizeGeoLabel(region)
+function normalizeChinaProvince(value: string) {
+  const normalized = normalizeGeoLabel(value)
     .replace(/^中国/, '')
     .replace(/省|市|壮族自治区|回族自治区|维吾尔自治区|自治区|特别行政区|地区|盟/g, '')
     .trim();
   if (!normalized || normalized === '0' || normalized === '未知' || normalized.toLowerCase() === 'unknown') return '';
-  return CHINA_PROVINCE_ALIASES[normalized] || normalized;
+  return normalized;
 }
 
 function normalizeGeoLabel(value: string) {
@@ -165,19 +165,4 @@ const COUNTRY_NAME_TO_ISO: Record<string, string> = {
   'south korea': 'KR', 'korea': 'KR',
   'russia': 'RU', 'vietnam': 'VN',
   'singapore': 'SG', 'japan': 'JP', 'germany': 'DE', 'france': 'FR',
-};
-
-const CHINA_PROVINCE_ALIASES: Record<string, string> = {
-  内蒙古: '内蒙古',
-  广西: '广西',
-  西藏: '西藏',
-  宁夏: '宁夏',
-  新疆: '新疆',
-  香港: '香港',
-  澳门: '澳门',
-  台湾: '台湾',
-  北京: '北京',
-  天津: '天津',
-  上海: '上海',
-  重庆: '重庆',
 };

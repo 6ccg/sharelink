@@ -99,7 +99,7 @@ func ResolveIP(ipStr string) GeoInfo {
 		return info
 	}
 
-	// Region string format: 国家|区域|省份|城市|ISP
+	// Region string format in the bundled xdb: 国家|省/州|城市|ISP|国家码
 	parts := strings.Split(regionStr, "|")
 	if len(parts) < 5 {
 		info := GeoInfo{Country: "未知", Region: "未知", City: "未知"}
@@ -108,8 +108,8 @@ func ResolveIP(ipStr string) GeoInfo {
 	}
 
 	country := parts[0]
-	region := parts[2]
-	city := parts[3]
+	region := parts[1]
+	city := parts[2]
 
 	if country == "0" {
 		country = "未知"
