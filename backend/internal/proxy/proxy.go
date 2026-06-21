@@ -579,11 +579,19 @@ func errorIconSVG(statusCode int) string {
 
 func serveFriendlyError(c *gin.Context, statusCode int, title, message string) {
 	c.Header("Content-Type", "text/html; charset=utf-8")
+	setNoStoreHeaders(c.Writer.Header())
 	c.String(statusCode, RenderPublicErrorHTML(statusCode, title, message))
 }
 
 func writeErrorHeaderAndBody(w http.ResponseWriter, statusCode int, title, message string) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	setNoStoreHeaders(w.Header())
 	w.WriteHeader(statusCode)
 	_, _ = w.Write([]byte(RenderPublicErrorHTML(statusCode, title, message)))
+}
+
+func setNoStoreHeaders(header http.Header) {
+	header.Set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+	header.Set("Pragma", "no-cache")
+	header.Set("Expires", "0")
 }

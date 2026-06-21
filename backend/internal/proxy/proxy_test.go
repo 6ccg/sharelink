@@ -297,4 +297,48 @@ func TestProxyRedirectInterception(t *testing.T) {
 	if w.Code != http.StatusBadGateway {
 		t.Errorf("expected status 502 for upstream redirect interception, got %d", w.Code)
 	}
+
+	assertNoStoreHeaders(t, w)
+}
+
+func TestExpiredLinkErrorIsNotCacheable(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	r.Any("/:prefix/:slug", ProxyHandler)
+
+	expiredAt := time.Now().Add(-time.Hour)
+	link := db.Link{
+		Prefix:     "/s",
+		Slug:       "expired",
+		PublicPath: "/s/expired",
+		TargetURL:  "http://example.com/file",
+		Mode:       "proxy",
+		Enabled:    true,
+		ExpireTime: &expiredAt,
+	}
+	db.DB.Create(&link)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/s/expired", nil)
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusGone {
+		t.Errorf("expected status 410 for expired link, got %d", w.Code)
+	}
+
+	assertNoStoreHeaders(t, w)
+}
+
+func assertNoStoreHeaders(t *testing.T, w *httptest.ResponseRecorder) {
+	t.Helper()
+
+	if got := w.Header().Get("Cache-Control"); got != "no-store, no-cache, must-revalidate, max-age=0" {
+		t.Errorf("expected no-store Cache-Control, got %q", got)
+	}
+	if got := w.Header().Get("Pragma"); got != "no-cache" {
+		t.Errorf("expected no-cache Pragma, got %q", got)
+	}
+	if got := w.Header().Get("Expires"); got != "0" {
+		t.Errorf("expected Expires 0, got %q", got)
+	}
 }
