@@ -1,9 +1,14 @@
 import type { Feature, FeatureCollection, Geometry } from 'geojson';
 import { feature } from 'topojson-client';
 import countries from 'i18n-iso-countries';
+import enLocale from 'i18n-iso-countries/langs/en.json';
+import zhLocale from 'i18n-iso-countries/langs/zh.json';
 import worldAtlas from 'world-atlas/countries-110m.json';
 import { ChinaData } from 'china-map-geojson';
 import type { GeoItem } from './types';
+
+countries.registerLocale(enLocale);
+countries.registerLocale(zhLocale);
 
 export interface MapFeatureProps {
   name: string;
