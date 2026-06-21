@@ -125,21 +125,6 @@ VITE_API_BASE_URL=http://localhost:18080
 
 同时需要把前端开发域名加入后端 `CORS_ALLOWED_ORIGINS`。
 
-## 环境变量
-
-| 变量 | 默认值 | 说明 |
-| --- | --- | --- |
-| `PORT` | `8080` | 后端监听端口 |
-| `DB_TYPE` | `sqlite` | 数据库类型，目前按 SQLite 使用 |
-| `DB_DSN` | `/data/sharelink.db` | SQLite 数据库文件路径 |
-| `DATA_DIR` | `/data` | 数据目录，容器内会挂载为持久卷 |
-| `IP_DB_PATH` | `/app/data/ip2region.xdb` | GeoIP 数据库路径；Docker 默认使用镜像内文件 |
-| `LOG_LEVEL` | `info` | 日志级别，`debug` 会启用 Gin 调试模式 |
-| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | 前端开发跨域白名单 |
-| `APP_TIMEZONE` | `Asia/Shanghai` | 访问统计、今日 PV/UV 和访客日粒度 UV 的业务时区；数据库时间统一按 UTC 存储 |
-| `INITIAL_ADMIN_PASSWORD` | 无 | 空数据库首次启动时的管理员初始密码，未设置会拒绝启动 |
-| `JWT_SECRET` | 示例值 | JWT 签名密钥，生产环境必须替换为随机强密钥 |
-
 ## 链接规则
 
 - 每条公开链接由 `prefix` 和 `slug` 组成，最终路径是 `/{prefix}/{slug}`。
@@ -162,7 +147,7 @@ docker-compose.yml
 
 ```bash
 cp .env.example .env
-# 编辑 .env，至少修改 INITIAL_ADMIN_PASSWORD 和 JWT_SECRET
+# 编辑 .env，修改 INITIAL_ADMIN_PASSWORD 和 JWT_SECRET
 docker compose pull
 docker compose up -d
 ```
@@ -234,7 +219,7 @@ npm run build
 健康检查：
 
 ```bash
-curl http://localhost:8080/health
+curl http://<部署地址>/health
 ```
 
 ## 注意事项
