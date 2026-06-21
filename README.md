@@ -74,7 +74,19 @@ docker-compose.yml    Docker Compose 部署配置
 nginx.example.conf    Nginx 反向代理示例
 Dockerfile            前后端一体化多阶段构建
 .env.example          环境变量模板
+run-test.cmd          Windows 本地测试启动脚本
 ```
+
+### 本地一键测试
+
+Windows 环境可以直接运行：
+
+```cmd
+run-test.cmd check
+run-test.cmd
+```
+
+`check` 会检查 Go、npm、GeoIP 数据库和前端依赖是否可用；不带参数会分别启动后端和前端测试窗口。
 
 ### 启动后端
 
